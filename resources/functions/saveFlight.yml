@@ -1,0 +1,12 @@
+saveQuotes:
+  handler: src/saveFlight.handler
+  description: Save flights to DynamoDB
+  memorySize: 128
+  events:
+    - sqs:
+        arn:
+          Fn::GetAtt:
+            - flightQueue
+            - Arn
+        batchSize: 10
+  timeout: 300
