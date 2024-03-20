@@ -1,12 +1,11 @@
-saveQuotes:
+removeFlight:
   handler: src/removeFlight.handler
   description: Remove flight from S3
   memorySize: 128
   events:
     - s3:
-        arn:
-          Fn::GetAtt:
-            - flightBucket
-            - Arn
-        batchSize: 10
-  timeout: 300
+        bucket: ${self:provider.environment.S3_BUCKET}
+        event: s3:ObjectCreated:*
+        rules:
+            - prefix: RemoveFlightNumber/
+            - suffix: .json

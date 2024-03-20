@@ -9,25 +9,25 @@ provider:
   region: us-east-1
   environment:
     DYNAMODB_TABLE: flights
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:BatchWriteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
-package:
-  exclude:
-    - docker/**
+    S3_BUCKET: flight-ojijhbudasdash-1qaz2wsx
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchWriteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
+  - ${file(./resources/functions/removeFlight.yml)}
 
 resources:
   - ${file(./resources/sqs.yml)}
   - ${file(./resources/dynamodb.yml)}
-  # - ${file(./resources/s3.yml)}
