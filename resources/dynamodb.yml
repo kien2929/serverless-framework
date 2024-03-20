@@ -2,7 +2,7 @@ Resources:
   MyDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: flights
+      TableName: ${self:provider.environment.DYNAMODB_TABLE}
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S

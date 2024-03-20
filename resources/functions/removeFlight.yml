@@ -1,0 +1,12 @@
+saveQuotes:
+  handler: src/removeFlight.handler
+  description: Remove flight from S3
+  memorySize: 128
+  events:
+    - s3:
+        arn:
+          Fn::GetAtt:
+            - flightBucket
+            - Arn
+        batchSize: 10
+  timeout: 300
