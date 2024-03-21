@@ -38,9 +38,6 @@ module.exports.handler = async (event) => {
     if (flights.length === 0) return;
 
     await saveFlights(flights);
-    console.log(
-      `Saved ${params.RequestItems[process.env.DYNAMODB_TABLE].length} to DB.`
-    );
   } catch (error) {
     console.log(error);
   }
@@ -64,4 +61,7 @@ const saveFlights = async (flights) => {
   });
 
   await dynamoDb.batchWrite(params).promise();
+  console.log(
+    `Saved ${params.RequestItems[process.env.DYNAMODB_TABLE].length} to DB.`
+  );
 };
