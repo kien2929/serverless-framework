@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "install-dependency": "npm i && cd lambda-layer && npm i && cd flight_modules && npm i",
+    "deploy-layer": "cd lambda-layer && sls deploy"
+  },
   "devDependencies": {
     "serverless": "^3.38.0"
   },

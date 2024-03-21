@@ -6,11 +6,25 @@ npm i -g serverless
 ```
 Install project
 ```sh
-npm i
+npm run install-dependency
 ```
 
+
 ### Deploy
-Deploy your project
+#### Deploy lambda-layer
+```sh
+npm run deploy-layer
+```
+
+#### Specify lambda-layer version in `serverless.yml`
+(only need to update when deploy a new version of lambda-layer)
+```yml
+environment:
+  ...
+  LAYER_VERSION: ${VERSION}
+```
+
+#### Deploy your project
 ```sh
 serverless deploy
 ```
