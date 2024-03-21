@@ -12,4 +12,4 @@ removeFlight:
   environment:
     NODE_PATH: "./:/opt/node_modules"
   layers:
-    - arn:aws:lambda:${self:provider.region}:${aws:accountId}:layer:FlightNodeModulesLayer:8
+    - arn:aws:lambda:${self:provider.region}:${aws:accountId}:layer:FlightNodeModulesLayer:${self:provider.environment.LAYER_VERSION}
