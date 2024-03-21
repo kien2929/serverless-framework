@@ -1,87 +1,143 @@
 "use strict";
+var path = require("path");
 const s3 = require("./utils/s3");
-const { success } = require("./utils/response");
+const dynamoDb = require("./utils/dynamodb");
+const { convertFlightIdentifierToId } = require("./helpers/flight");
 
-module.exports.handler = (event, context, callback) => {
-  const records = {};
-  const { bucketName, objKey } = event;
-  const params = {
-    Bucket: bucketName,
-    Key: objKey,
-  };
-  console.log(2)
-  return new Promise((resolve) => {
-    s3.getObject(params, async (err, data) => {
-      if (err) console.log(err, err.stack);
-      else {
-        const contents = JSON.parse(data.Body);
-        console.log(1)
-        console.log(contents)
-        resolve(contents);
-      }
-    });
-  });
-  event.Records.forEach((record) => {
-    const body = JSON.parse(record.body);
-    const flight = JSON.parse(body);
-    const {
-      CarrierCode,
-      FlightNumber,
-      DepartureDate,
-      DepartureAirport,
-      ArrivalAirport,
-      DisruptionType,
-      DisruptionCode,
-      DisruptionReason,
-    } = flight.FlightIdentifier;
-    const id = `${CarrierCode}#${FlightNumber}#${DepartureDate}#${DepartureAirport}`;
-    if (!records[id]) {
-      records[id] = {
-        id,
-        CarrierCode,
-        FlightNumber,
-        DepartureDate,
-        DepartureAirport,
-        ArrivalAirport,
-        DisruptionType,
-        DisruptionCode,
-        DisruptionReason,
-      };
+module.exports.handler = async (event) => {
+  try {
+    const bucket = event.Records[0].s3.bucket.name;
+    const fileKey = event.Records[0].s3.object.key;
+    const file = await getFileObject(bucket, fileKey);
+    const fileBody = JSON.parse(file.Body);
+    const records = fileBody.Records.map(({ body }) => JSON.parse(body));
+    const idsInRecord = records.map(({ FlightIdentifier }) =>
+      convertFlightIdentifierToId(FlightIdentifier)
+    );
+
+    const itemByIds = await getItemByIds(idsInRecord);
+
+    const idsInDatabase = itemByIds.Responses[process.env.DYNAMODB_TABLE]
+      .filter((item) => idsInRecord.includes(item.id))
+      .map(({ id }) => id);
+    const idsNotInDatabase = idsInRecord.filter(
+      (id) => !idsInDatabase.includes(id)
+    );
+
+    if (idsInDatabase.length > 0) {
+      await Promise.all([
+        removeFlights(idsInDatabase),
+        moveFileToDestination(bucket, fileKey, "Archived"),
+      ]);
+    } else {
+      await moveFileToDestination(bucket, fileKey, "Error");
     }
-  });
-  const flights = Object.values(records);
-
-  if (flights.length > 0) {
-    const params = {
-      RequestItems: {},
-    };
-
-    const timestamp = Date.now().toString();
-
-    params.RequestItems[process.env.DYNAMODB_TABLE] = flights.map((flight) => {
-      return {
-        PutRequest: {
-          Item: {
-            ...flight,
-            createdAt: timestamp,
-            updatedAt: timestamp,
-          },
-        },
-      };
-    });
-    dynamoDb.batchWrite(params, (err, data) => {
-      if (err) {
-        callback(err);
-      } else {
-        console.log(
-          `Saved ${
-            params.RequestItems[process.env.DYNAMODB_TABLE].length
-          } to DB.`
-        );
-        callback(null, success(JSON.stringify(data, null, 2)));
-      }
-    });
-  } else {
-    callback(null);
+    await Promise.all([
+      putRecordsToDestination({
+        bucket,
+        records,
+        fileKey,
+        ids: idsInDatabase,
+        folderDestination: "Processed",
+      }),
+      putRecordsToDestination({
+        bucket,
+        records,
+        fileKey,
+        ids: idsNotInDatabase,
+        folderDestination: "UnProcessed",
+      }),
+    ]);
+  } catch (error) {
+    console.log(error);
+    await moveFileToDestination(bucket, fileKey, "Error");
   }
+};
+
+const putRecordsToDestination = async ({
+  ids,
+  bucket,
+  records,
+  fileKey,
+  folderDestination,
+}) => {
+  const timestamp = Date.now().toString();
+  const filenameWithoutExtension = path.basename(
+    fileKey,
+    path.extname(fileKey)
+  );
+  const recordsUpload = records.filter((record) =>
+    ids.includes(convertFlightIdentifierToId(record.FlightIdentifier))
+  );
+
+  if (recordsUpload.length === 0) return
+
+  const buffer = Buffer.from(
+    JSON.stringify({
+      Records: recordsUpload,
+    })
+  );
+
+  return s3
+    .upload({
+      Bucket: bucket,
+      Key: `${folderDestination}/${filenameWithoutExtension}-${timestamp}.json`,
+      Body: buffer,
+      ContentEncoding: "base64",
+      ContentType: "application/json",
+    })
+    .promise();
+};
+
+const removeFlights = async (ids) => {
+  const params = {
+    RequestItems: {
+      [process.env.DYNAMODB_TABLE]: ids.map((id) => ({
+        DeleteRequest: {
+          Key: { id },
+        },
+      })),
+    },
+  };
+  await dynamoDb.batchWrite(params).promise();
+};
+
+const getFileObject = async (bucket, key) => {
+  return s3
+    .getObject({
+      Bucket: bucket,
+      Key: key,
+    })
+    .promise();
+};
+
+const moveFileToDestination = async (bucket, sourceKey, newPath) => {
+  const filename = path.basename(sourceKey);
+  await s3
+    .copyObject({
+      Bucket: bucket,
+      CopySource: `${bucket}/${sourceKey}`,
+      Key: `${newPath}/${filename}`,
+    })
+    .promise();
+
+  return s3
+    .deleteObject({
+      Bucket: bucket,
+      Key: sourceKey,
+    })
+    .promise();
+};
+
+const getItemByIds = async (ids) => {
+  const params = {
+    RequestItems: {
+      [process.env.DYNAMODB_TABLE]: {
+        Keys: ids.map((id) => ({
+          id,
+        })),
+      },
+    },
+  };
+  return await dynamoDb.batchGet(params).promise();
 };

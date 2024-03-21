@@ -21,8 +21,13 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
             - dynamodb:BatchWriteItem
           Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
 
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
