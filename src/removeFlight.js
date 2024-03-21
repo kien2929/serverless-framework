@@ -5,9 +5,9 @@ const dynamoDb = require("./utils/dynamodb");
 const { convertFlightIdentifierToId } = require("./helpers/flight");
 
 module.exports.handler = async (event) => {
+  const bucket = event?.Records[0]?.s3?.bucket?.name;
+  const fileKey = event?.Records[0]?.s3?.object?.key;
   try {
-    const bucket = event.Records[0].s3.bucket.name;
-    const fileKey = event.Records[0].s3.object.key;
     const file = await getFileObject(bucket, fileKey);
     const fileBody = JSON.parse(file.Body);
     const records = fileBody.Records.map(({ body }) => JSON.parse(body));
@@ -70,7 +70,7 @@ const putRecordsToDestination = async ({
     ids.includes(convertFlightIdentifierToId(record.FlightIdentifier))
   );
 
-  if (recordsUpload.length === 0) return
+  if (recordsUpload.length === 0) return;
 
   const buffer = Buffer.from(
     JSON.stringify({
