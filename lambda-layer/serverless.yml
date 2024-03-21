@@ -1,0 +1,15 @@
+service: lambda-layer
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: serverlessUser
+  region: us-east-1
+
+layers:
+  FlightNodeModulesLayer:
+    path: flight_modules
+    description: "Node modules Dependencies"
+    compatibleRuntimes:
+      - "nodejs18.x"

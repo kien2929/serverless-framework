@@ -30,6 +30,12 @@ provider:
             - s3:*
           Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
 
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!lambda-layer/**'
+    - '!resources/**'
+
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
   - ${file(./resources/functions/removeFlight.yml)}

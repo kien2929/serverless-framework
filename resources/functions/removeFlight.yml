@@ -7,5 +7,9 @@ removeFlight:
         bucket: ${self:provider.environment.S3_BUCKET}
         event: s3:ObjectCreated:*
         rules:
-            - prefix: RemoveFlightNumber/
-            - suffix: .json
+          - prefix: RemoveFlightNumber/
+          - suffix: .json
+  environment:
+    NODE_PATH: "./:/opt/node_modules"
+  layers:
+    - arn:aws:lambda:${self:provider.region}:${aws:accountId}:layer:FlightNodeModulesLayer:8

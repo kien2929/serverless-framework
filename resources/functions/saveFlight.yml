@@ -10,3 +10,7 @@ saveFlight:
             - Arn
         batchSize: 10
   timeout: 300
+  environment:
+    NODE_PATH: "./:/opt/node_modules"
+  layers:
+    - arn:aws:lambda:${self:provider.region}:${aws:accountId}:layer:FlightNodeModulesLayer:8
