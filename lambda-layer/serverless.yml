@@ -9,7 +9,7 @@ provider:
 
 layers:
   FlightNodeModulesLayer:
-    path: flight_modules
+    path: flight_modules/node_modules
     description: "Node modules Dependencies"
     compatibleRuntimes:
       - "nodejs18.x"

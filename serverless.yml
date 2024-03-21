@@ -2,16 +2,18 @@ service: myserverless
 
 frameworkVersion: "3"
 
+useDotenv: true
+
 provider:
   name: aws
   runtime: nodejs18.x
   profile: serverlessUser
   region: us-east-1
   environment:
-    DYNAMODB_TABLE: flights
-    S3_BUCKET: flight-ojijhbudasdash-1qaz2wsx
-    FLIGHT_QUEUE: flightQueue
-    LAYER_VERSION: 9
+    DYNAMODB_TABLE: ${env:DYNAMODB_TABLE}
+    S3_BUCKET: ${env:S3_BUCKET}
+    FLIGHT_QUEUE: ${env:FLIGHT_QUEUE}
+    LAYER_VERSION: ${env:LAYER_VERSION}
   iam:
     role:
       statements:
@@ -36,6 +38,7 @@ package:
     - '!node_modules/**'
     - '!lambda-layer/**'
     - '!resources/**'
+    - '!.env*'
 
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
