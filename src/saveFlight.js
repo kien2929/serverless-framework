@@ -2,25 +2,12 @@
 const dynamoDb = require("./utils/dynamodb");
 const { convertFlightIdentifierToId } = require("./helpers/flight");
 
-module.exports.handler = (event) => {
-  const records = {};
-  event.Records.forEach((record) => {
-    const body = JSON.parse(record.body);
-    const flight = JSON.parse(body);
-    const {
-      CarrierCode,
-      FlightNumber,
-      DepartureDate,
-      DepartureAirport,
-      ArrivalAirport,
-      DisruptionType,
-      DisruptionCode,
-      DisruptionReason,
-    } = flight.FlightIdentifier;
-    const id = convertFlightIdentifierToId(flight.FlightIdentifier);
-    if (!records[id]) {
-      records[id] = {
-        id,
+module.exports.handler = async (event) => {
+  try {
+    const records = event.Records.reduce((accumulator, record) => {
+      const body = JSON.parse(record.body);
+      const flight = JSON.parse(body);
+      const {
         CarrierCode,
         FlightNumber,
         DepartureDate,
@@ -29,19 +16,41 @@ module.exports.handler = (event) => {
         DisruptionType,
         DisruptionCode,
         DisruptionReason,
-      };
-    }
-  });
-  const flights = Object.values(records);
+      } = flight.FlightIdentifier;
+      const id = convertFlightIdentifierToId(flight.FlightIdentifier);
+      if (!accumulator[id]) {
+        accumulator[id] = {
+          id,
+          CarrierCode,
+          FlightNumber,
+          DepartureDate,
+          DepartureAirport,
+          ArrivalAirport,
+          DisruptionType,
+          DisruptionCode,
+          DisruptionReason,
+        };
+      }
+      return accumulator
+    }, {});
 
-  if (flights.length === 0) return
+    const flights = Object.values(records);
+    if (flights.length === 0) return;
 
+    await saveFlights(flights);
+    console.log(
+      `Saved ${params.RequestItems[process.env.DYNAMODB_TABLE].length} to DB.`
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const saveFlights = async (flights) => {
   const params = {
     RequestItems: {},
   };
-
   const timestamp = Date.now().toString();
-
   params.RequestItems[process.env.DYNAMODB_TABLE] = flights.map((flight) => {
     return {
       PutRequest: {
@@ -53,13 +62,6 @@ module.exports.handler = (event) => {
       },
     };
   });
-  dynamoDb.batchWrite(params, (err, data) => {
-    if (err) {
-      console.log(err)
-    } else {
-      console.log(
-        `Saved ${params.RequestItems[process.env.DYNAMODB_TABLE].length} to DB.`
-      );
-    }
-  });
+
+  await dynamoDb.batchWrite(params).promise();
 };
