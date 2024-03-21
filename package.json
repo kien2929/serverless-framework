@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "create-env": "cp .env.example .env",
     "install-dependency": "npm i && cd lambda-layer && npm i && cd flight_modules && npm i",
     "deploy-layer": "cd lambda-layer && sls deploy"
   },

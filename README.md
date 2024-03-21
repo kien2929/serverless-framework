@@ -4,6 +4,11 @@ Install serverless locally
 ```sh
 npm i -g serverless
 ```
+Create ENV file
+```sh
+npm run create-env
+```
+
 Install project
 ```sh
 npm run install-dependency
