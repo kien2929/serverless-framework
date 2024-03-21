@@ -6,7 +6,7 @@ saveFlight:
     - sqs:
         arn:
           Fn::GetAtt:
-            - flightQueue
+            - ${self:provider.environment.FLIGHT_QUEUE}
             - Arn
         batchSize: 10
   timeout: 300

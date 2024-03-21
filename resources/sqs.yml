@@ -2,6 +2,6 @@ Resources:
   flightQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: flightQueue
+      QueueName: ${self:provider.environment.FLIGHT_QUEUE}
       ReceiveMessageWaitTimeSeconds: 1
       VisibilityTimeout: 300

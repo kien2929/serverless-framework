@@ -9,16 +9,6 @@ Install project
 npm i
 ```
 
-### Usage
-To run function on your local
-```sh
-serverless invoke local --function hello
-```
-
-To server function as API
-```sh
-serverless offline start
-```
 ### Deploy
 Deploy your project
 ```sh

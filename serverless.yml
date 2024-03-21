@@ -10,6 +10,7 @@ provider:
   environment:
     DYNAMODB_TABLE: flights
     S3_BUCKET: flight-ojijhbudasdash-1qaz2wsx
+    FLIGHT_QUEUE: flightQueue
   iam:
     role:
       statements:
