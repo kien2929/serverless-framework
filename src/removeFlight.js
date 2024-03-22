@@ -1,10 +1,10 @@
 "use strict";
-var path = require("path");
-const s3 = require("./utils/s3");
-const dynamoDb = require("./utils/dynamodb");
-const { convertFlightIdentifierToId } = require("./helpers/flight");
+import path from "path";
+import s3 from"./utils/s3";
+import dynamoDb from "./utils/dynamodb";
+import { convertFlightIdentifierToId } from "./helpers/flight";
 
-module.exports.handler = async (event) => {
+export const handler = async (event) => {
   const bucket = event?.Records[0]?.s3?.bucket?.name;
   const fileKey = event?.Records[0]?.s3?.object?.key;
   try {

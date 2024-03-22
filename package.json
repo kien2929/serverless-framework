@@ -5,7 +5,9 @@
     "deploy-layer": "cd lambda-layer && sls deploy"
   },
   "devDependencies": {
-    "serverless": "^3.38.0"
+    "esbuild": "^0.20.2",
+    "serverless": "^3.38.0",
+    "serverless-esbuild": "^1.52.1"
   },
   "dependencies": {
     "aws-sdk": "^2.1581.0"

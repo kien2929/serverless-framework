@@ -1,7 +1,7 @@
-const AWS = require('aws-sdk')
+import AWS from'aws-sdk'
 
 let options = {}
 
-const client = new AWS.DynamoDB.DocumentClient(options)
+const dynamoDbClient = new AWS.DynamoDB.DocumentClient(options)
 
-module.exports = client
+export default dynamoDbClient

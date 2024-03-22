@@ -1,8 +1,8 @@
 "use strict";
-const dynamoDb = require("./utils/dynamodb");
-const { convertFlightIdentifierToId } = require("./helpers/flight");
+import dynamoDb from "./utils/dynamodb";
+import { convertFlightIdentifierToId } from "./helpers/flight";
 
-module.exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     const records = event.Records.reduce((accumulator, record) => {
       const body = JSON.parse(record.body);

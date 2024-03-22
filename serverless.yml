@@ -4,29 +4,28 @@ frameworkVersion: "3"
 
 useDotenv: true
 
+plugins:
+  - serverless-esbuild
+
 provider:
   name: aws
   runtime: nodejs18.x
   profile: serverlessUser
   region: us-east-1
+  deploymentBucket:
+    name: ${self:provider.environment.DEPLOYMENT_BUCKET}
   environment:
     DYNAMODB_TABLE: ${env:DYNAMODB_TABLE}
     S3_BUCKET: ${env:S3_BUCKET}
     FLIGHT_QUEUE: ${env:FLIGHT_QUEUE}
     LAYER_VERSION: ${env:LAYER_VERSION}
+    DEPLOYMENT_BUCKET: ${env:DEPLOYMENT_BUCKET}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
-            - dynamodb:BatchGetItem
-            - dynamodb:BatchWriteItem
+            - dynamodb:*
           Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
         - Effect: Allow
           Action:
@@ -35,10 +34,10 @@ provider:
 
 package:
   patterns:
-    - '!node_modules/**'
-    - '!lambda-layer/**'
-    - '!resources/**'
-    - '!.env*'
+    - "!node_modules/**"
+    - "!lambda-layer/**"
+    - "!resources/**"
+    - "!.env*"
 
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
