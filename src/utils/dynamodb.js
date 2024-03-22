@@ -1,7 +1,9 @@
-import AWS from'aws-sdk'
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-let options = {}
+let options = {};
 
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient(options)
+const client = new DynamoDBClient(options);
+const documentClient = DynamoDBDocumentClient.from(client)
 
-export default dynamoDbClient
+export default documentClient;

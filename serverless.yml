@@ -30,6 +30,7 @@ custom:
   params: ${self:custom.defaults.custom.params.${self:provider.stage}}
   prune:  ${file(./defaults.yml):custom.prune}
 package:
+  individually: true
   patterns:
     - "!node_modules/**"
     - "!lambda-layer/**"

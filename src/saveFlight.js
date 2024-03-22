@@ -1,5 +1,6 @@
 "use strict";
-import dynamoDb from "./utils/dynamodb";
+import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+import documentClient from "./utils/dynamodb";
 import { convertFlightIdentifierToId } from "./helpers/flight";
 
 export const handler = async (event) => {
@@ -61,7 +62,7 @@ const saveFlights = async (flights) => {
     };
   });
 
-  await dynamoDb.batchWrite(params).promise();
+  await documentClient.send(new BatchWriteCommand(params))
   console.log(
     `Saved ${params.RequestItems[process.env.DYNAMODB_TABLE].length} to DB.`
   );

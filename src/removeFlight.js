@@ -1,15 +1,22 @@
 "use strict";
 import path from "path";
-import s3 from"./utils/s3";
-import dynamoDb from "./utils/dynamodb";
+import { BatchWriteCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DeleteObjectCommand,
+  CopyObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import s3Client from "./utils/s3";
+import documentClient from "./utils/dynamodb";
 import { convertFlightIdentifierToId } from "./helpers/flight";
 
 export const handler = async (event) => {
   const bucket = event?.Records[0]?.s3?.bucket?.name;
   const fileKey = event?.Records[0]?.s3?.object?.key;
   try {
-    const file = await getFileObject(bucket, fileKey);
-    const fileBody = JSON.parse(file.Body);
+    const fileBodyString = await getFileObjectBodyString(bucket, fileKey);
+    const fileBody = JSON.parse(fileBodyString);
     const records = fileBody.Records.map(({ body }) => JSON.parse(body));
     const idsInRecord = records.map(({ FlightIdentifier }) =>
       convertFlightIdentifierToId(FlightIdentifier)
@@ -78,20 +85,19 @@ const putRecordsToDestination = async ({
       Records: recordsUpload,
     })
   );
+  const putObjectCommand = new PutObjectCommand({
+    Bucket: bucket,
+    Key: `${folderDestination}/${filenameWithoutExtension}-${timestamp}.json`,
+    Body: buffer,
+    ContentEncoding: "base64",
+    ContentType: "application/json",
+  });
 
-  return s3
-    .upload({
-      Bucket: bucket,
-      Key: `${folderDestination}/${filenameWithoutExtension}-${timestamp}.json`,
-      Body: buffer,
-      ContentEncoding: "base64",
-      ContentType: "application/json",
-    })
-    .promise();
+  return s3Client.send(putObjectCommand);
 };
 
 const removeFlights = async (ids) => {
-  const params = {
+  const command = new BatchWriteCommand({
     RequestItems: {
       [process.env.DYNAMODB_TABLE]: ids.map((id) => ({
         DeleteRequest: {
@@ -99,39 +105,40 @@ const removeFlights = async (ids) => {
         },
       })),
     },
-  };
-  await dynamoDb.batchWrite(params).promise();
+  });
+  await documentClient.send(command);
 };
 
-const getFileObject = async (bucket, key) => {
-  return s3
-    .getObject({
-      Bucket: bucket,
-      Key: key,
-    })
-    .promise();
+const getFileObjectBodyString = async (bucket, key) => {
+  const getCommand = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+  const file = await s3Client.send(getCommand);
+
+  return file.Body.transformToString()
 };
 
 const moveFileToDestination = async (bucket, sourceKey, newPath) => {
   const filename = path.basename(sourceKey);
-  await s3
-    .copyObject({
-      Bucket: bucket,
-      CopySource: `${bucket}/${sourceKey}`,
-      Key: `${newPath}/${filename}`,
-    })
-    .promise();
+  const copyCommand = new CopyObjectCommand({
+    Bucket: bucket,
+    CopySource: `${bucket}/${sourceKey}`,
+    Key: `${newPath}/${filename}`,
+  });
 
-  return s3
-    .deleteObject({
-      Bucket: bucket,
-      Key: sourceKey,
-    })
-    .promise();
+  await s3Client.send(copyCommand);
+
+  const deleteCommand = new DeleteObjectCommand({
+    Bucket: bucket,
+    Key: sourceKey,
+  });
+
+  return s3Client.send(deleteCommand);
 };
 
 const getItemByIds = async (ids) => {
-  const params = {
+  const command = new BatchGetCommand({
     RequestItems: {
       [process.env.DYNAMODB_TABLE]: {
         Keys: ids.map((id) => ({
@@ -139,6 +146,6 @@ const getItemByIds = async (ids) => {
         })),
       },
     },
-  };
-  return await dynamoDb.batchGet(params).promise();
+  });
+  return await documentClient.send(command);
 };
