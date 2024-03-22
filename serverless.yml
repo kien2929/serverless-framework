@@ -1,12 +1,9 @@
 service: myserverless
-
 frameworkVersion: "3"
-
 useDotenv: true
-
 plugins:
   - serverless-esbuild
-
+  - serverless-prune-plugin
 provider:
   name: aws
   runtime: nodejs18.x
@@ -31,18 +28,15 @@ provider:
           Action:
             - s3:*
           Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
-
 package:
   patterns:
     - "!node_modules/**"
     - "!lambda-layer/**"
     - "!resources/**"
     - "!.env*"
-
 functions:
   - ${file(./resources/functions/saveFlight.yml)}
   - ${file(./resources/functions/removeFlight.yml)}
-
 resources:
   - ${file(./resources/sqs.yml)}
   - ${file(./resources/dynamodb.yml)}
