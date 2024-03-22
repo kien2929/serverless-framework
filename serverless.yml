@@ -1,33 +1,34 @@
-service: myserverless
+service: ${self:custom.defaults.service}
 frameworkVersion: "3"
 useDotenv: true
 plugins:
   - serverless-esbuild
   - serverless-prune-plugin
+  - serverless-dotenv-plugin
 provider:
   name: aws
   runtime: nodejs18.x
   profile: serverlessUser
-  region: us-east-1
+  stage: ${opt:stage, "dev"}
+  region: ${opt:region, "us-east-1"}
   deploymentBucket:
-    name: ${self:provider.environment.DEPLOYMENT_BUCKET}
-  environment:
-    DYNAMODB_TABLE: ${env:DYNAMODB_TABLE}
-    S3_BUCKET: ${env:S3_BUCKET}
-    FLIGHT_QUEUE: ${env:FLIGHT_QUEUE}
-    LAYER_VERSION: ${env:LAYER_VERSION}
-    DEPLOYMENT_BUCKET: ${env:DEPLOYMENT_BUCKET}
+    name: ${self:custom.params.DEPLOYMENT_BUCKET}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:*
-          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            - dynamodb:BatchWriteItem
+            - dynamodb:BatchGetItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.params.DYNAMODB_TABLE}"
         - Effect: Allow
           Action:
             - s3:*
-          Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+          Resource: "arn:aws:s3:::${self:custom.params.S3_BUCKET}/*"
+custom:
+  defaults: ${file(./defaults.yml)}
+  params: ${self:custom.defaults.custom.params.${self:provider.stage}}
+  prune:  ${file(./defaults.yml):custom.prune}
 package:
   patterns:
     - "!node_modules/**"

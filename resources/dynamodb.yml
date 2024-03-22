@@ -2,7 +2,7 @@ Resources:
   MyDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ${self:provider.environment.DYNAMODB_TABLE}
+      TableName: ${self:custom.params.DYNAMODB_TABLE}
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S

@@ -40,6 +40,7 @@ export const handler = async (event) => {
     await saveFlights(flights);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 

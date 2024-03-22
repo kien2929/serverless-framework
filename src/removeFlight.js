@@ -51,6 +51,7 @@ export const handler = async (event) => {
   } catch (error) {
     console.log(error);
     await moveFileToDestination(bucket, fileKey, "Error");
+    throw error;
   }
 };
 

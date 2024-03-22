@@ -1,0 +1,12 @@
+service: myserverless
+custom:
+  prune:
+    automatic: true
+    number: 1
+  params:
+    dev:
+      S3_BUCKET: ${env:S3_BUCKET}
+      FLIGHT_QUEUE: ${env:FLIGHT_QUEUE}
+      LAYER_VERSION: ${env:LAYER_VERSION}
+      DYNAMODB_TABLE: ${env:DYNAMODB_TABLE}
+      DEPLOYMENT_BUCKET: ${env:DEPLOYMENT_BUCKET}
