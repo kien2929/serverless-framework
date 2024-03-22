@@ -25,14 +25,14 @@ export const handler = async (event) => {
     );
 
     if (idsInDatabase.length > 0) {
-      await Promise.all([
+      await Promise.allSettled([
         removeFlights(idsInDatabase),
         moveFileToDestination(bucket, fileKey, "Archived"),
       ]);
     } else {
       await moveFileToDestination(bucket, fileKey, "Error");
     }
-    await Promise.all([
+    await Promise.allSettled([
       putRecordsToDestination({
         bucket,
         records,
