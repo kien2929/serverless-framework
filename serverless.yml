@@ -5,30 +5,25 @@ plugins:
   - serverless-esbuild
   - serverless-prune-plugin
   - serverless-dotenv-plugin
+  - serverless-deployment-bucket
 provider:
   name: aws
   runtime: nodejs18.x
-  profile: serverlessUser
   stage: ${opt:stage, "dev"}
   region: ${opt:region, "us-east-1"}
   deploymentBucket:
     name: ${self:custom.params.DEPLOYMENT_BUCKET}
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:BatchWriteItem
-            - dynamodb:BatchGetItem
-          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.params.DYNAMODB_TABLE}"
-        - Effect: Allow
-          Action:
-            - s3:*
-          Resource: "arn:aws:s3:::${self:custom.params.S3_BUCKET}/*"
+
 custom:
   defaults: ${file(./defaults.yml)}
+  base: ${self:service}-${self:provider.stage}
   params: ${self:custom.defaults.custom.params.${self:provider.stage}}
   prune:  ${file(./defaults.yml):custom.prune}
+  iam:
+    SaveFlightLambdaRole:
+      name: ${self:custom.base}-save-flight-lambda-role
+    RemoveFlightLambdaRole:
+      name: ${self:custom.base}-remove-flight-lambda-role
 package:
   individually: true
   patterns:
@@ -42,3 +37,5 @@ functions:
 resources:
   - ${file(./resources/sqs.yml)}
   - ${file(./resources/dynamodb.yml)}
+  - ${file(./resources/iam/lambdaRemoveFlightRole.yml)}
+  - ${file(./resources/iam/lambdaSaveFlightRole.yml)}

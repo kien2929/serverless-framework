@@ -1,0 +1,30 @@
+Resources:
+  SaveFlightLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.iam.SaveFlightLambdaRole.name}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: lambda-permissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: arn:aws:sqs:${self:provider.region}:${aws:accountId}:${self:custom.params.FLIGHT_QUEUE}
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchWriteItem
+                Resource: arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:custom.params.DYNAMODB_TABLE}

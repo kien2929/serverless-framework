@@ -4,8 +4,7 @@ frameworkVersion: "3"
 provider:
   name: aws
   runtime: nodejs18.x
-  profile: serverlessUser
-  region: us-east-1
+  region: ${opt:region, "us-east-1"}
 
 layers:
   FlightNodeModulesLayer:

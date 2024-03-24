@@ -2,6 +2,7 @@ saveFlight:
   handler: src/saveFlight.handler
   description: Save flights to DynamoDB
   memorySize: 128
+  role: !GetAtt SaveFlightLambdaRole.Arn
   events:
     - sqs:
         arn:

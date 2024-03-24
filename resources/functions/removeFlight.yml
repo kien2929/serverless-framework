@@ -2,6 +2,7 @@ removeFlight:
   handler: src/removeFlight.handler
   description: Remove flight from S3
   memorySize: 128
+  role: !GetAtt RemoveFlightLambdaRole.Arn
   events:
     - s3:
         bucket: ${self:custom.params.S3_BUCKET}
